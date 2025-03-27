@@ -16,10 +16,16 @@ from data.models import (
     InsiderTradeResponse,
 )
 
-# Global cache instance
+# 全部缓存实例，包含股票：
+# - 股票价格
+# - 财务指标
+# - 财务项目
+# - 内部交易
+# - 公司新闻
+# - 市值
 _cache = get_cache()
 
-
+# 获取股票价格，包含：open、close、high、low、volume、time
 def get_prices(ticker: str, start_date: str, end_date: str) -> list[Price]:
     """Fetch price data from cache or API."""
     # Check cache first
@@ -50,7 +56,7 @@ def get_prices(ticker: str, start_date: str, end_date: str) -> list[Price]:
     _cache.set_prices(ticker, [p.model_dump() for p in prices])
     return prices
 
-
+# 获取财务指标数据
 def get_financial_metrics(
     ticker: str,
     end_date: str,
@@ -88,7 +94,7 @@ def get_financial_metrics(
     _cache.set_financial_metrics(ticker, [m.model_dump() for m in financial_metrics])
     return financial_metrics
 
-
+# 获取财务项目数据
 def search_line_items(
     ticker: str,
     line_items: list[str],
@@ -123,7 +129,7 @@ def search_line_items(
     # Cache the results
     return search_results[:limit]
 
-
+# 获取内部交易数据
 def get_insider_trades(
     ticker: str,
     end_date: str,
@@ -186,7 +192,7 @@ def get_insider_trades(
     _cache.set_insider_trades(ticker, [trade.model_dump() for trade in all_trades])
     return all_trades
 
-
+# 获取公司新闻
 def get_company_news(
     ticker: str,
     end_date: str,
@@ -249,8 +255,7 @@ def get_company_news(
     _cache.set_company_news(ticker, [news.model_dump() for news in all_news])
     return all_news
 
-
-
+# 获取市值
 def get_market_cap(
     ticker: str,
     end_date: str,
@@ -263,7 +268,7 @@ def get_market_cap(
 
     return market_cap
 
-
+# 价格转换为DataFrame
 def prices_to_df(prices: list[Price]) -> pd.DataFrame:
     """Convert prices to a DataFrame."""
     df = pd.DataFrame([p.model_dump() for p in prices])
@@ -274,7 +279,6 @@ def prices_to_df(prices: list[Price]) -> pd.DataFrame:
         df[col] = pd.to_numeric(df[col], errors="coerce")
     df.sort_index(inplace=True)
     return df
-
 
 # Update the get_price_data function to use the new functions
 def get_price_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame:

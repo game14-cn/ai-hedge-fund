@@ -32,7 +32,7 @@ load_dotenv()
 
 init(autoreset=True)
 
-
+# 解析对冲基金的响应结果
 def parse_hedge_fund_response(response):
     """Parses a JSON string and returns a dictionary."""
     try:
@@ -47,9 +47,7 @@ def parse_hedge_fund_response(response):
         print(f"Unexpected error while parsing response: {e}\nResponse: {repr(response)}")
         return None
 
-
-
-##### Run the Hedge Fund #####
+##### 运行对冲基金 #####
 def run_hedge_fund(
     tickers: list[str],
     start_date: str,
@@ -60,11 +58,11 @@ def run_hedge_fund(
     model_name: str = "gpt-4o",
     model_provider: str = "OpenAI",
 ):
-    # Start progress tracking
+    # 开始进度跟踪
     progress.start()
 
     try:
-        # Create a new workflow if analysts are customized
+        # 如果自定义了分析师，创建一个新的工作流
         if selected_analysts:
             workflow = create_workflow(selected_analysts)
             agent = workflow.compile()
@@ -106,7 +104,7 @@ def start(state: AgentState):
     """Initialize the workflow with the input message."""
     return state
 
-
+# 创建工作流，同时设置Agents（很重要）
 def create_workflow(selected_analysts=None):
     """Create the workflow with selected analysts."""
     workflow = StateGraph(AgentState)
@@ -115,7 +113,7 @@ def create_workflow(selected_analysts=None):
     # Get analyst nodes from the configuration
     analyst_nodes = get_analyst_nodes()
 
-    # Default to all analysts if none selected
+    # 设置选择代理，如果没有选择，则默认所有
     if selected_analysts is None:
         selected_analysts = list(analyst_nodes.keys())
     # Add selected analyst nodes
@@ -124,11 +122,11 @@ def create_workflow(selected_analysts=None):
         workflow.add_node(node_name, node_func)
         workflow.add_edge("start_node", node_name)
 
-    # Always add risk and portfolio management
+    # 添加风险管理代理和投资组合管理代理
     workflow.add_node("risk_management_agent", risk_management_agent)
     workflow.add_node("portfolio_management_agent", portfolio_management_agent)
 
-    # Connect selected analysts to risk management
+    # 连接选定的分析师到风险管理
     for analyst_key in selected_analysts:
         node_name = analyst_nodes[analyst_key][0]
         workflow.add_edge(node_name, "risk_management_agent")
@@ -139,39 +137,45 @@ def create_workflow(selected_analysts=None):
     workflow.set_entry_point("start_node")
     return workflow
 
-
+# 程序入口点
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run the hedge fund trading system")
+    # 初始保证金
     parser.add_argument(
         "--initial-cash",
         type=float,
         default=100000.0,
         help="Initial cash position. Defaults to 100000.0)"
     )
+    # 保证金要求
     parser.add_argument(
         "--margin-requirement",
         type=float,
         default=0.0,
         help="Initial margin requirement. Defaults to 0.0"
     )
+    # 股票代码
     parser.add_argument("--tickers", type=str, required=True, help="Comma-separated list of stock ticker symbols")
+    # 开始时间和结束时间
     parser.add_argument(
         "--start-date",
         type=str,
         help="Start date (YYYY-MM-DD). Defaults to 3 months before end date",
     )
     parser.add_argument("--end-date", type=str, help="End date (YYYY-MM-DD). Defaults to today")
+    # 显示推理过程
     parser.add_argument("--show-reasoning", action="store_true", help="Show reasoning from each agent")
+    # 显示AI分析图
     parser.add_argument(
         "--show-agent-graph", action="store_true", help="Show the agent graph"
     )
 
     args = parser.parse_args()
 
-    # Parse tickers from comma-separated string
+    # 解析股票代码
     tickers = [ticker.strip() for ticker in args.tickers.split(",")]
 
-    # Select analysts
+    # 选择AI分析师
     selected_analysts = None
     choices = questionary.checkbox(
         "Select your AI analysts.",
@@ -195,7 +199,7 @@ if __name__ == "__main__":
         selected_analysts = choices
         print(f"\nSelected analysts: {', '.join(Fore.GREEN + choice.title().replace('_', ' ') + Style.RESET_ALL for choice in choices)}\n")
 
-    # Select LLM model
+    # 选择LLM模型
     model_choice = questionary.select(
         "Select your LLM model:",
         choices=[questionary.Choice(display, value=value) for display, value, _ in LLM_ORDER],
@@ -220,10 +224,11 @@ if __name__ == "__main__":
             model_provider = "Unknown"
             print(f"\nSelected model: {Fore.GREEN + Style.BRIGHT}{model_choice}{Style.RESET_ALL}\n")
 
-    # Create the workflow with selected analysts
+    # 创建工作流
     workflow = create_workflow(selected_analysts)
     app = workflow.compile()
 
+    # 显示AI分析图
     if args.show_agent_graph:
         file_path = ""
         if selected_analysts is not None:
@@ -232,7 +237,7 @@ if __name__ == "__main__":
             file_path += "graph.png"
         save_graph_as_png(app, file_path)
 
-    # Validate dates if provided
+    # 检测日期格式
     if args.start_date:
         try:
             datetime.strptime(args.start_date, "%Y-%m-%d")
@@ -245,7 +250,7 @@ if __name__ == "__main__":
         except ValueError:
             raise ValueError("End date must be in YYYY-MM-DD format")
 
-    # Set the start and end dates
+    # 设置开始和结束日期
     end_date = args.end_date or datetime.now().strftime("%Y-%m-%d")
     if not args.start_date:
         # Calculate 3 months before end_date
@@ -254,27 +259,27 @@ if __name__ == "__main__":
     else:
         start_date = args.start_date
 
-    # Initialize portfolio with cash amount and stock positions
+    # 初始化投资组合
     portfolio = {
-        "cash": args.initial_cash,  # Initial cash amount
-        "margin_requirement": args.margin_requirement,  # Initial margin requirement
+        "cash": args.initial_cash,  # 初始现金金额
+        "margin_requirement": args.margin_requirement,  # 初始保证金要求
         "positions": {
             ticker: {
-                "long": 0,  # Number of shares held long
-                "short": 0,  # Number of shares held short
-                "long_cost_basis": 0.0,  # Average cost basis for long positions
-                "short_cost_basis": 0.0,  # Average price at which shares were sold short
+                "long": 0,  # 持有的多头股票数量
+                "short": 0,  # 持有的空头股票数量
+                "long_cost_basis": 0.0,  # 多头持仓的平均成本基础
+                "short_cost_basis": 0.0,  # 做空股票时的平均售出价格
             } for ticker in tickers
         },
         "realized_gains": {
             ticker: {
-                "long": 0.0,  # Realized gains from long positions
-                "short": 0.0,  # Realized gains from short positions
+                "long": 0.0,  # 多头持仓的已实现收益
+                "short": 0.0,  # 空头持仓的已实现收益
             } for ticker in tickers
         }
     }
 
-    # Run the hedge fund
+    # 执行对冲基金
     result = run_hedge_fund(
         tickers=tickers,
         start_date=start_date,

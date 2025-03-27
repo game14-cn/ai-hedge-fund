@@ -21,6 +21,7 @@ class PortfolioManagerOutput(BaseModel):
 
 
 ##### Portfolio Management Agent #####
+##### 投资组合管理代理 #####
 def portfolio_management_agent(state: AgentState):
     """Makes final trading decisions and generates orders for multiple tickers"""
 

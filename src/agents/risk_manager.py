@@ -6,6 +6,7 @@ import json
 
 
 ##### Risk Management Agent #####
+##### 风险管理代理 #####
 def risk_management_agent(state: AgentState):
     """Controls position sizing based on real-world risk factors for multiple tickers."""
     portfolio = state["data"]["portfolio"]
