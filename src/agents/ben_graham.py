@@ -19,11 +19,11 @@ class BenGrahamSignal(BaseModel):
 
 def ben_graham_agent(state: AgentState):
     """
-    Analyzes stocks using Benjamin Graham's classic value-investing principles:
-    1. Earnings stability over multiple years.
-    2. Solid financial strength (low debt, adequate liquidity).
-    3. Discount to intrinsic value (e.g. Graham Number or net-net).
-    4. Adequate margin of safety.
+    使用本杰明·格雷厄姆的经典价值投资原则分析股票：
+    1. 多年的盈利稳定性。
+    2. 稳健的财务实力（低负债，充足的流动性）。
+    3. 相对于内在价值的折价（例如格雷厄姆数或净净值）。
+    4. 充足的安全边际。
     """
     data = state["data"]
     end_date = data["end_date"]
@@ -90,7 +90,12 @@ def ben_graham_agent(state: AgentState):
 
     return {"messages": [message], "data": state["data"]}
 
-
+"""
+格雷厄姆要求至少有几年持续的正盈利（理想情况下5年以上）。
+我们将检查：
+1. 每股收益为正的年数。
+2. 从第一期到最后一期的每股收益增长情况。
+"""
 def analyze_earnings_stability(metrics: list, financial_line_items: list) -> dict:
     """
     Graham wants at least several years of consistently positive earnings (ideally 5+).
@@ -134,7 +139,10 @@ def analyze_earnings_stability(metrics: list, financial_line_items: list) -> dic
 
     return {"score": score, "details": "; ".join(details)}
 
-
+"""
+格雷厄姆检查流动性（流动比率 >= 2）、可控的债务水平，
+以及股息记录（最好有一定的派息历史）。
+"""
 def analyze_financial_strength(metrics: list, financial_line_items: list) -> dict:
     """
     Graham checks liquidity (current ratio >= 2), manageable debt,
@@ -200,7 +208,12 @@ def analyze_financial_strength(metrics: list, financial_line_items: list) -> dic
 
     return {"score": score, "details": "; ".join(details)}
 
-
+"""
+格雷厄姆估值的核心方法：
+1. 净净值检查：（流动资产 - 总负债）与市值比较
+2. 格雷厄姆数：sqrt(22.5 * 每股收益 * 每股账面价值)
+3. 将每股价格与格雷厄姆数比较 => 安全边际
+"""
 def analyze_valuation_graham(metrics: list, financial_line_items: list, market_cap: float) -> dict:
     """
     Core Graham approach to valuation:
@@ -221,9 +234,9 @@ def analyze_valuation_graham(metrics: list, financial_line_items: list, market_c
     details = []
     score = 0
 
-    # 1. Net-Net Check
-    #   NCAV = Current Assets - Total Liabilities
-    #   If NCAV > Market Cap => historically a strong buy signal
+    # 1. 净净值检查
+    #   净流动资产价值 = 流动资产 - 总负债
+    #   如果净流动资产价值 > 市值 => 历史上这是一个强烈的买入信号
     net_current_asset_value = current_assets - total_liabilities
     if net_current_asset_value > 0 and shares_outstanding > 0:
         net_current_asset_value_per_share = net_current_asset_value / shares_outstanding
@@ -244,10 +257,10 @@ def analyze_valuation_graham(metrics: list, financial_line_items: list, market_c
     else:
         details.append("NCAV not exceeding market cap or insufficient data for net-net approach.")
 
-    # 2. Graham Number
-    #   GrahamNumber = sqrt(22.5 * EPS * BVPS).
-    #   Compare the result to the current price_per_share
-    #   If GrahamNumber >> price, indicates undervaluation
+    # 2. 格雷厄姆数
+    #   格雷厄姆数 = sqrt(22.5 * 每股收益 * 每股账面价值)
+    #   将结果与当前每股价格进行比较
+    #   如果格雷厄姆数远大于价格，表明股票被低估
     graham_number = None
     if eps > 0 and book_value_ps > 0:
         graham_number = math.sqrt(22.5 * eps * book_value_ps)
@@ -255,7 +268,7 @@ def analyze_valuation_graham(metrics: list, financial_line_items: list, market_c
     else:
         details.append("Unable to compute Graham Number (EPS or Book Value missing/<=0).")
 
-    # 3. Margin of Safety relative to Graham Number
+    # 3. 相对于格雷厄姆数的安全边际
     if graham_number and shares_outstanding > 0:
         current_price = market_cap / shares_outstanding
         if current_price > 0:
@@ -283,11 +296,32 @@ def generate_graham_output(
     model_provider: str,
 ) -> BenGrahamSignal:
     """
-    Generates an investment decision in the style of Benjamin Graham:
-    - Value emphasis, margin of safety, net-nets, conservative balance sheet, stable earnings.
-    - Return the result in a JSON structure: { signal, confidence, reasoning }.
+    按照本杰明·格雷厄姆的风格生成投资决策：
+    - 重视价值、安全边际、净净值、稳健的资产负债表和稳定的收益。
+    - 返回 JSON 结构的结果：{ signal（信号）, confidence（置信度）, reasoning（理由） }。
     """
 
+    """
+    你是一个本杰明·格雷厄姆 AI 代理，使用他的原则做出投资决策：
+    1. 坚持通过低于内在价值的买入价格来确保安全边际（例如，使用格雷厄姆数、净净值）。
+    2. 强调公司的财务实力（低杠杆、充足的流动资产）。
+    3. 偏好多年稳定的收益。
+    4. 考虑股息记录以增加额外的安全性。
+    5. 避免投机或高增长假设；专注于已被证实的指标。
+
+    在提供你的理由时，要做到详尽且具体：
+    1. 解释最影响你决策的关键估值指标（格雷厄姆数、净流动资产价值、市盈率等）
+    2. 突出具体的财务实力指标（流动比率、债务水平等）
+    3. 引用收益随时间的稳定性或不稳定性
+    4. 提供精确的数字作为量化证据
+    5. 将当前指标与格雷厄姆的具体阈值进行比较（例如："流动比率 2.5 超过了格雷厄姆要求的最低 2.0"）
+    6. 使用本杰明·格雷厄姆保守、分析性的语气和风格来解释
+
+    看涨示例："该股票相对于净流动资产价值有 35% 的折价，提供了充足的安全边际。2.5 的流动比率和 0.3 的资产负债率表明财务状况良好..."
+    看跌示例："尽管收益稳定，但当前 50 美元的价格超过了我们计算的 35 美元格雷厄姆数，没有提供安全边际。此外，仅为 1.2 的流动比率低于格雷厄姆偏好的 2.0 阈值..."
+                
+    返回一个理性的建议：看涨、看跌或中性，并附带置信度（0-100）和详细的理由。
+    """
     template = ChatPromptTemplate.from_messages([
         (
             "system",
@@ -312,6 +346,19 @@ def generate_graham_output(
             Return a rational recommendation: bullish, bearish, or neutral, with a confidence level (0-100) and thorough reasoning.
             """
         ),
+        """
+        基于以下分析，创建一个格雷厄姆风格的投资信号：
+
+        {ticker} 的分析数据：
+        {analysis_data}
+
+        返回的 JSON 必须严格按照以下格式：
+        {
+            "signal": "bullish"（看涨）或 "bearish"（看跌）或 "neutral"（中性）,
+            "confidence": float（0-100 的浮点数）,
+            "reasoning": "string"（分析理由）
+        }
+        """
         (
             "human",
             """Based on the following analysis, create a Graham-style investment signal:
