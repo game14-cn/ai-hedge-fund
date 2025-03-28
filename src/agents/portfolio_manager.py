@@ -88,7 +88,43 @@ def portfolio_management_agent(state: AgentState):
         "data": state["data"],
     }
 
+'''
+    "system",
+    """你是一个基于多个股票代码做出最终交易决策的投资组合经理。
 
+    交易规则：
+    - 对于多头仓位：
+    * 只有在有可用现金时才能买入
+    * 只有在当前持有该股票的多头仓位时才能卖出
+    * 卖出数量必须 ≤ 当前多头仓位数量
+    * 买入数量必须 ≤ 该股票的最大允许股数
+    
+    - 对于空头仓位：
+    * 只有在有可用保证金时才能做空（需要50%的仓位价值作为保证金）
+    * 只有在当前持有该股票的空头仓位时才能回补
+    * 回补数量必须 ≤ 当前空头仓位数量
+    * 做空数量必须符合保证金要求
+    
+    - 最大股数值已经预先计算以遵守仓位限制
+    - 根据信号考虑多头和空头机会
+    - 通过多空头敞口维持适当的风险管理
+
+    可用操作：
+    - "buy"：开启或增加多头仓位
+    - "sell"：关闭或减少多头仓位
+    - "short"：开启或增加空头仓位
+    - "cover"：关闭或减少空头仓位
+    - "hold"：不采取行动
+
+    输入参数：
+    - signals_by_ticker：股票代码 → 信号的字典
+    - max_shares：每个股票允许的最大股数
+    - portfolio_cash：投资组合当前现金
+    - portfolio_positions：当前仓位（包括多头和空头）
+    - current_prices：每个股票的当前价格
+    - margin_requirement：空头仓位的当前保证金要求
+    """,
+'''
 def generate_trading_decision(
     tickers: list[str],
     signals_by_ticker: dict[str, dict],
