@@ -9,6 +9,10 @@ from tools.api import get_insider_trades, get_company_news
 
 
 ##### Sentiment Agent #####
+'''
+情绪代理
+ - 分析市场情绪并生成交易信号
+'''
 def sentiment_agent(state: AgentState):
     """Analyzes market sentiment and generates trading signals for multiple tickers."""
     data = state.get("data", {})

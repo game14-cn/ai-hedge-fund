@@ -23,9 +23,11 @@ class PortfolioManagerOutput(BaseModel):
 ##### Portfolio Management Agent #####
 ##### 投资组合管理代理 #####
 def portfolio_management_agent(state: AgentState):
+    # 为多个交易品种做出最终交易决策并生成订单
     """Makes final trading decisions and generates orders for multiple tickers"""
 
     # Get the portfolio and analyst signals
+    # 获取投资组合和分析师信号
     portfolio = state["data"]["portfolio"]
     analyst_signals = state["data"]["analyst_signals"]
     tickers = state["data"]["tickers"]
@@ -33,6 +35,7 @@ def portfolio_management_agent(state: AgentState):
     progress.update_status("portfolio_management_agent", None, "Analyzing signals")
 
     # Get position limits, current prices, and signals for every ticker
+    # 获取每个交易品种的仓位限制、当前价格和信号
     position_limits = {}
     current_prices = {}
     max_shares = {}
@@ -41,17 +44,20 @@ def portfolio_management_agent(state: AgentState):
         progress.update_status("portfolio_management_agent", ticker, "Processing analyst signals")
 
         # Get position limits and current prices for the ticker
+        # 获取仓位限制和当前价格
         risk_data = analyst_signals.get("risk_management_agent", {}).get(ticker, {})
         position_limits[ticker] = risk_data.get("remaining_position_limit", 0)
         current_prices[ticker] = risk_data.get("current_price", 0)
 
         # Calculate maximum shares allowed based on position limit and price
+        # 计算允许的最大股数
         if current_prices[ticker] > 0:
             max_shares[ticker] = int(position_limits[ticker] / current_prices[ticker])
         else:
             max_shares[ticker] = 0
 
         # Get signals for the ticker
+        # 获取信号
         ticker_signals = {}
         for agent, signals in analyst_signals.items():
             if agent != "risk_management_agent" and ticker in signals:
@@ -61,6 +67,7 @@ def portfolio_management_agent(state: AgentState):
     progress.update_status("portfolio_management_agent", None, "Making trading decisions")
 
     # Generate the trading decision
+    # 生成交易决策
     result = generate_trading_decision(
         tickers=tickers,
         signals_by_ticker=signals_by_ticker,
@@ -72,12 +79,14 @@ def portfolio_management_agent(state: AgentState):
     )
 
     # Create the portfolio management message
+    # 创建投资组合管理消息
     message = HumanMessage(
         content=json.dumps({ticker: decision.model_dump() for ticker, decision in result.decisions.items()}),
         name="portfolio_management",
     )
 
     # Print the decision if the flag is set
+    # 如果设置了标志，则打印决策
     if state["metadata"]["show_reasoning"]:
         show_agent_reasoning({ticker: decision.model_dump() for ticker, decision in result.decisions.items()}, "Portfolio Management Agent")
 
@@ -134,8 +143,10 @@ def generate_trading_decision(
     model_name: str,
     model_provider: str,
 ) -> PortfolioManagerOutput:
+    # 尝试从 LLM 获取决策，包含重试逻辑
     """Attempts to get a decision from the LLM with retry logic"""
     # Create the prompt template
+    # 创建提示模板
     template = ChatPromptTemplate.from_messages(
         [
             (
@@ -177,6 +188,7 @@ def generate_trading_decision(
             ),
             (
               "human",
+              # 基于团队的分析，为每个交易品种做出交易决策。
               """Based on the team's analysis, make your trading decisions for each ticker.
 
               Here are the signals by ticker:
@@ -225,6 +237,7 @@ def generate_trading_decision(
     )
 
     # Create default factory for PortfolioManagerOutput
+    # 创建 PortfolioManagerOutput 的默认工厂
     def create_default_portfolio_output():
         return PortfolioManagerOutput(decisions={ticker: PortfolioDecision(action="hold", quantity=0, confidence=0.0, reasoning="Error in portfolio management, defaulting to hold") for ticker in tickers})
 

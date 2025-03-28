@@ -14,7 +14,10 @@ class CathieWoodSignal(BaseModel):
     confidence: float
     reasoning: str
 
-
+'''
+凯西·伍德代理
+ - 成长投资女王，相信创新和颠覆的力量
+'''
 def cathie_wood_agent(state: AgentState):
     """
     Analyzes stocks using Cathie Wood's investing principles and LLM reasoning.

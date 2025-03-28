@@ -21,7 +21,10 @@ class PhilFisherSignal(BaseModel):
     confidence: float
     reasoning: str
 
-
+'''
+菲利普·费雪代理
+ - 传奇成长投资者，精通市场调查分析
+'''
 def phil_fisher_agent(state: AgentState):
     """
     Analyzes stocks using Phil Fisher's investing principles:

@@ -7,6 +7,10 @@ from tools.api import get_financial_metrics, get_market_cap, search_line_items
 
 
 ##### Valuation Agent #####
+'''
+估值代理
+ - 计算股票内在价值并生成交易信号
+'''
 def valuation_agent(state: AgentState):
     """Performs detailed valuation analysis using multiple methodologies for multiple tickers."""
     data = state["data"]

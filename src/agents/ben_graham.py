@@ -16,7 +16,10 @@ class BenGrahamSignal(BaseModel):
     confidence: float
     reasoning: str
 
-
+'''
+本杰明·格雷厄姆代理
+ - 价值投资之父，只买具有安全边际的隐藏瑰宝
+'''
 def ben_graham_agent(state: AgentState):
     """
     使用本杰明·格雷厄姆的经典价值投资原则分析股票：
@@ -43,6 +46,7 @@ def ben_graham_agent(state: AgentState):
         market_cap = get_market_cap(ticker, end_date)
 
         # Perform sub-analyses
+        # 执行子分析
         progress.update_status("ben_graham_agent", ticker, "Analyzing earnings stability")
         earnings_analysis = analyze_earnings_stability(metrics, financial_line_items)
 
@@ -53,10 +57,12 @@ def ben_graham_agent(state: AgentState):
         valuation_analysis = analyze_valuation_graham(metrics, financial_line_items, market_cap)
 
         # Aggregate scoring
+        # 聚合评分
         total_score = earnings_analysis["score"] + strength_analysis["score"] + valuation_analysis["score"]
         max_possible_score = 15  # total possible from the three analysis functions
 
         # Map total_score to signal
+        # 将总分映射到信号
         if total_score >= 0.7 * max_possible_score:
             signal = "bullish"
         elif total_score <= 0.3 * max_possible_score:
@@ -79,13 +85,16 @@ def ben_graham_agent(state: AgentState):
         progress.update_status("ben_graham_agent", ticker, "Done")
 
     # Wrap results in a single message for the chain
+    # 将结果包装在单个消息中
     message = HumanMessage(content=json.dumps(graham_analysis), name="ben_graham_agent")
 
     # Optionally display reasoning
+    # 显示推理过程
     if state["metadata"]["show_reasoning"]:
         show_agent_reasoning(graham_analysis, "Ben Graham Agent")
 
     # Store signals in the overall state
+    # 将信号存储在整体状态中
     state["data"]["analyst_signals"]["ben_graham_agent"] = graham_analysis
 
     return {"messages": [message], "data": state["data"]}
@@ -119,6 +128,7 @@ def analyze_earnings_stability(metrics: list, financial_line_items: list) -> dic
         return {"score": score, "details": "; ".join(details)}
 
     # 1. Consistently positive EPS
+    #   计算每股收益为正的年数
     positive_eps_years = sum(1 for e in eps_vals if e > 0)
     total_eps_years = len(eps_vals)
     if positive_eps_years == total_eps_years:
@@ -131,6 +141,7 @@ def analyze_earnings_stability(metrics: list, financial_line_items: list) -> dic
         details.append("EPS was negative in multiple periods.")
 
     # 2. EPS growth from earliest to latest
+    #   计算从第一年到最后一年每股收益的增长情况
     if eps_vals[-1] > eps_vals[0]:
         score += 1
         details.append("EPS grew from earliest to latest period.")
@@ -161,6 +172,7 @@ def analyze_financial_strength(metrics: list, financial_line_items: list) -> dic
     current_liabilities = latest_item.current_liabilities or 0
 
     # 1. Current ratio
+    #   流动比率 = 流动资产 / 流动负债
     if current_liabilities > 0:
         current_ratio = current_assets / current_liabilities
         if current_ratio >= 2.0:
@@ -175,6 +187,7 @@ def analyze_financial_strength(metrics: list, financial_line_items: list) -> dic
         details.append("Cannot compute current ratio (missing or zero current_liabilities).")
 
     # 2. Debt vs. Assets
+    #   资产负债率 = 总负债 / 总资产
     if total_assets > 0:
         debt_ratio = total_liabilities / total_assets
         if debt_ratio < 0.5:
@@ -189,13 +202,17 @@ def analyze_financial_strength(metrics: list, financial_line_items: list) -> dic
         details.append("Cannot compute debt ratio (missing total_assets).")
 
     # 3. Dividend track record
+    #   检查公司是否在这些期间内派息
     div_periods = [item.dividends_and_other_cash_distributions for item in financial_line_items if item.dividends_and_other_cash_distributions is not None]
     if div_periods:
         # In many data feeds, dividend outflow is shown as a negative number
         # (money going out to shareholders). We'll consider any negative as 'paid a dividend'.
+        # 在许多数据源中，股息支出显示为负数
+        # （支付给股东的现金）。我们将任何负数视为"已支付股息"。
         div_paid_years = sum(1 for d in div_periods if d < 0)
         if div_paid_years > 0:
             # e.g. if at least half the periods had dividends
+            # （至少一半的期间内派息）
             if div_paid_years >= (len(div_periods) // 2 + 1):
                 score += 1
                 details.append("Company paid dividends in the majority of the reported years.")
@@ -251,6 +268,7 @@ def analyze_valuation_graham(metrics: list, financial_line_items: list, market_c
             details.append("Net-Net: NCAV > Market Cap (classic Graham deep value).")
         else:
             # For partial net-net discount
+            # 部分净净值折扣
             if net_current_asset_value_per_share >= (price_per_share * 0.67):
                 score += 2
                 details.append("NCAV Per Share >= 2/3 of Price Per Share (moderate net-net discount).")
@@ -288,7 +306,27 @@ def analyze_valuation_graham(metrics: list, financial_line_items: list, market_c
 
     return {"score": score, "details": "; ".join(details)}
 
+'''
+你是一个本杰明·格雷厄姆 AI 代理，使用他的原则做出投资决策：
+1. 坚持通过低于内在价值的买入价格来确保安全边际（例如，使用格雷厄姆数、净净值）。
+2. 强调公司的财务实力（低杠杆、充足的流动资产）。
+3. 偏好多年稳定的收益。
+4. 考虑股息记录以增加额外的安全性。
+5. 避免投机或高增长假设；专注于已被证实的指标。
 
+在提供你的理由时，要做到详尽且具体：
+1. 解释最影响你决策的关键估值指标（格雷厄姆数、净流动资产价值、市盈率等）
+2. 突出具体的财务实力指标（流动比率、债务水平等）
+3. 引用收益随时间的稳定性或不稳定性
+4. 提供精确的数字作为量化证据
+5. 将当前指标与格雷厄姆的具体阈值进行比较（例如："流动比率 2.5 超过了格雷厄姆要求的最低 2.0"）
+6. 使用本杰明·格雷厄姆保守、分析性的语气和风格来解释
+
+看涨示例："该股票相对于净流动资产价值有 35% 的折价，提供了充足的安全边际。2.5 的流动比率和 0.3 的资产负债率表明财务状况良好..."
+看跌示例："尽管收益稳定，但当前 50 美元的价格超过了我们计算的 35 美元格雷厄姆数，没有提供安全边际。此外，仅为 1.2 的流动比率低于格雷厄姆偏好的 2.0 阈值..."
+            
+返回一个理性的建议：看涨、看跌或中性，并附带置信度（0-100）和详细的理由。
+'''
 def generate_graham_output(
     ticker: str,
     analysis_data: dict[str, any],
@@ -301,27 +339,6 @@ def generate_graham_output(
     - 返回 JSON 结构的结果：{ signal（信号）, confidence（置信度）, reasoning（理由） }。
     """
 
-    """
-    你是一个本杰明·格雷厄姆 AI 代理，使用他的原则做出投资决策：
-    1. 坚持通过低于内在价值的买入价格来确保安全边际（例如，使用格雷厄姆数、净净值）。
-    2. 强调公司的财务实力（低杠杆、充足的流动资产）。
-    3. 偏好多年稳定的收益。
-    4. 考虑股息记录以增加额外的安全性。
-    5. 避免投机或高增长假设；专注于已被证实的指标。
-
-    在提供你的理由时，要做到详尽且具体：
-    1. 解释最影响你决策的关键估值指标（格雷厄姆数、净流动资产价值、市盈率等）
-    2. 突出具体的财务实力指标（流动比率、债务水平等）
-    3. 引用收益随时间的稳定性或不稳定性
-    4. 提供精确的数字作为量化证据
-    5. 将当前指标与格雷厄姆的具体阈值进行比较（例如："流动比率 2.5 超过了格雷厄姆要求的最低 2.0"）
-    6. 使用本杰明·格雷厄姆保守、分析性的语气和风格来解释
-
-    看涨示例："该股票相对于净流动资产价值有 35% 的折价，提供了充足的安全边际。2.5 的流动比率和 0.3 的资产负债率表明财务状况良好..."
-    看跌示例："尽管收益稳定，但当前 50 美元的价格超过了我们计算的 35 美元格雷厄姆数，没有提供安全边际。此外，仅为 1.2 的流动比率低于格雷厄姆偏好的 2.0 阈值..."
-                
-    返回一个理性的建议：看涨、看跌或中性，并附带置信度（0-100）和详细的理由。
-    """
     template = ChatPromptTemplate.from_messages([
         (
             "system",

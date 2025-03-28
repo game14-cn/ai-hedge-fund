@@ -13,6 +13,10 @@ from utils.progress import progress
 
 
 ##### Technical Analyst #####
+'''
+技术分析师
+- 综合运用多种技术指标和分析方法，为多个股票生成交易信号
+'''
 def technical_analyst_agent(state: AgentState):
     """
     Sophisticated technical analysis system that combines multiple trading strategies for multiple tickers:

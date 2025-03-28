@@ -14,7 +14,10 @@ class WarrenBuffettSignal(BaseModel):
     confidence: float
     reasoning: str
 
-
+'''
+沃伦·巴菲特代理
+ - 奥马哈先知，寻找合理价格的优质公司
+'''
 def warren_buffett_agent(state: AgentState):
     """Analyzes stocks using Buffett's principles and LLM reasoning."""
     data = state["data"]

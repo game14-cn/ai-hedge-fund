@@ -13,7 +13,10 @@ class CharlieMungerSignal(BaseModel):
     confidence: float
     reasoning: str
 
-
+'''
+查理·芒格代理
+ - 沃伦·巴菲特的合伙人，只在合理价格买入优质企业
+'''
 def charlie_munger_agent(state: AgentState):
     """
     Analyzes stocks using Charlie Munger's investing principles and mental models.

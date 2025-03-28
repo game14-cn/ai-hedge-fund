@@ -7,6 +7,10 @@ from tools.api import get_financial_metrics
 
 
 ##### Fundamental Agent #####
+'''
+基本面代理
+- 分析基本面数据并生成交易信号
+'''
 def fundamentals_agent(state: AgentState):
     """Analyzes fundamental data and generates trading signals for multiple tickers."""
     data = state["data"]

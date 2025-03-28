@@ -22,7 +22,10 @@ class StanleyDruckenmillerSignal(BaseModel):
     confidence: float
     reasoning: str
 
-
+'''
+斯坦利·德鲁肯米勒代理
+ - 宏观投资传奇，寻找具有成长潜力的不对称机会
+'''
 def stanley_druckenmiller_agent(state: AgentState):
     """
     Analyzes stocks using Stanley Druckenmiller's investing principles:
