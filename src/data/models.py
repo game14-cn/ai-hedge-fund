@@ -72,6 +72,7 @@ class LineItem(BaseModel):
     currency: str
 
     # Allow additional fields dynamically
+    # 允许动态添加额外的字段
     model_config = {"extra": "allow"}
 
 
@@ -120,7 +121,7 @@ class Position(BaseModel):
 
 
 class Portfolio(BaseModel):
-    positions: dict[str, Position]  # ticker -> Position mapping
+    positions: dict[str, Position]  # ticker -> Position mapping # ticker -> Position映射
     total_cash: float = 0.0
 
 
@@ -128,12 +129,12 @@ class AnalystSignal(BaseModel):
     signal: str | None = None
     confidence: float | None = None
     reasoning: dict | str | None = None
-    max_position_size: float | None = None  # For risk management signals
+    max_position_size: float | None = None  # For risk management signals # 用于风险管理信号
 
 
 class TickerAnalysis(BaseModel):
     ticker: str
-    analyst_signals: dict[str, AnalystSignal]  # agent_name -> signal mapping
+    analyst_signals: dict[str, AnalystSignal]  # agent_name -> signal mapping # agent_name -> signal映射
 
 
 class AgentStateData(BaseModel):
@@ -141,7 +142,7 @@ class AgentStateData(BaseModel):
     portfolio: Portfolio
     start_date: str
     end_date: str
-    ticker_analyses: dict[str, TickerAnalysis]  # ticker -> analysis mapping
+    ticker_analyses: dict[str, TickerAnalysis]  # ticker -> analysis mapping # ticker -> analysis映射
 
 
 class AgentStateMetadata(BaseModel):

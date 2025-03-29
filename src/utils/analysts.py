@@ -1,4 +1,5 @@
 """Constants and utilities related to analysts configuration."""
+"""分析师配置相关的常量和工具。"""
 
 from agents.ben_graham import ben_graham_agent
 from agents.bill_ackman import bill_ackman_agent
@@ -13,6 +14,7 @@ from agents.valuation import valuation_agent
 from agents.warren_buffett import warren_buffett_agent
 
 # Define analyst configuration - single source of truth
+# 定义分析师配置 - 单一的事实来源
 ANALYST_CONFIG = {
     "ben_graham": {
         "display_name": "Ben Graham",
@@ -72,9 +74,11 @@ ANALYST_CONFIG = {
 }
 
 # Derive ANALYST_ORDER from ANALYST_CONFIG for backwards compatibility
+# 从 ANALYST_CONFIG 导出 ANALYST_ORDER 以保持向后兼容性
 ANALYST_ORDER = [(config["display_name"], key) for key, config in sorted(ANALYST_CONFIG.items(), key=lambda x: x[1]["order"])]
 
 
 def get_analyst_nodes():
     """Get the mapping of analyst keys to their (node_name, agent_func) tuples."""
+    # 获取分析师键到其（node_name, agent_func）元组的映射。
     return {key: (f"{key}_agent", config["agent_func"]) for key, config in ANALYST_CONFIG.items()}

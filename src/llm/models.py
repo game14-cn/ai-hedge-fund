@@ -11,6 +11,7 @@ from typing import Tuple
 
 class ModelProvider(str, Enum):
     """Enum for supported LLM providers"""
+    # 枚举支持的LLM提供商
     ANTHROPIC = "Anthropic"
     DEEPSEEK = "DeepSeek"
     GEMINI = "Gemini"
@@ -21,28 +22,34 @@ class ModelProvider(str, Enum):
 
 class LLMModel(BaseModel):
     """Represents an LLM model configuration"""
+    # 表示LLM模型配置
     display_name: str
     model_name: str
     provider: ModelProvider
 
     def to_choice_tuple(self) -> Tuple[str, str, str]:
         """Convert to format needed for questionary choices"""
+        # 转换为需要的格式
         return (self.display_name, self.model_name, self.provider.value)
     
     def has_json_mode(self) -> bool:
         """Check if the model supports JSON mode"""
+        # 检查模型是否支持JSON模式
         return not self.is_deepseek() and not self.is_gemini()
     
     def is_deepseek(self) -> bool:
         """Check if the model is a DeepSeek model"""
+        # 检查模型是否是DeepSeek模型
         return self.model_name.startswith("deepseek")
     
     def is_gemini(self) -> bool:
         """Check if the model is a Gemini model"""
+        # 检查模型是否是Gemini模型
         return self.model_name.startswith("gemini")
 
 
 # Define available models
+# 定义可用的模型
 AVAILABLE_MODELS = [
     LLMModel(
         display_name="[anthropic] claude-3.5-haiku",
@@ -107,10 +114,12 @@ AVAILABLE_MODELS = [
 ]
 
 # Create LLM_ORDER in the format expected by the UI
+# 创建LLM_ORDER，格式与UI期望的格式相同
 LLM_ORDER = [model.to_choice_tuple() for model in AVAILABLE_MODELS]
 
 def get_model_info(model_name: str) -> LLMModel | None:
     """Get model information by model_name"""
+    # 通过model_name获取模型信息
     return next((model for model in AVAILABLE_MODELS if model.model_name == model_name), None)
 
 def get_model(model_name: str, model_provider: ModelProvider) -> ChatOpenAI | ChatGroq | None:
@@ -118,14 +127,17 @@ def get_model(model_name: str, model_provider: ModelProvider) -> ChatOpenAI | Ch
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
             # Print error to console
+            # 打印错误到控制台
             print(f"API Key Error: Please make sure GROQ_API_KEY is set in your .env file.")
             raise ValueError("Groq API key not found.  Please make sure GROQ_API_KEY is set in your .env file.")
         return ChatGroq(model=model_name, api_key=api_key)
     elif model_provider == ModelProvider.OPENAI:
         # Get and validate API key
+        # 获取和验证API密钥
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             # Print error to console
+            # 打印错误到控制台
             print(f"API Key Error: Please make sure OPENAI_API_KEY is set in your .env file.")
             raise ValueError("OpenAI API key not found.  Please make sure OPENAI_API_KEY is set in your .env file.")
         return ChatOpenAI(model=model_name, api_key=api_key)

@@ -11,7 +11,7 @@ console = Console()
 
 class AgentProgress:
     """Manages progress tracking for multiple agents."""
-
+    """管理多个代理的进度跟踪。"""
     def __init__(self):
         self.agent_status: Dict[str, Dict[str, str]] = {}
         self.table = Table(show_header=False, box=None, padding=(0, 1))
@@ -20,18 +20,21 @@ class AgentProgress:
 
     def start(self):
         """Start the progress display."""
+        # 开始进度显示
         if not self.started:
             self.live.start()
             self.started = True
 
     def stop(self):
         """Stop the progress display."""
+        # 停止进度显示
         if self.started:
             self.live.stop()
             self.started = False
 
     def update_status(self, agent_name: str, ticker: Optional[str] = None, status: str = ""):
         """Update the status of an agent."""
+        # 更新代理的状态
         if agent_name not in self.agent_status:
             self.agent_status[agent_name] = {"status": "", "ticker": None}
 
@@ -44,10 +47,12 @@ class AgentProgress:
 
     def _refresh_display(self):
         """Refresh the progress display."""
+        # 刷新进度显示
         self.table.columns.clear()
         self.table.add_column(width=100)
 
         # Sort agents with Risk Management and Portfolio Management at the bottom
+        # 对代理进行排序，将风险管理和投资组合管理放在底部
         def sort_key(item):
             agent_name = item[0]
             if "risk_management" in agent_name:
@@ -62,6 +67,7 @@ class AgentProgress:
             ticker = info["ticker"]
 
             # Create the status text with appropriate styling
+            # 根据适当的样式创建状态文本
             if status.lower() == "done":
                 style = Style(color="green", bold=True)
                 symbol = "✓"

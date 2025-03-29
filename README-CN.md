@@ -163,6 +163,9 @@ ai-hedge-fund/
 
 如果您有功能请求，请开启一个 [issue](https://github.com/virattt/ai-hedge-fund/issues) 并确保标记为 `enhancement`。
 
+## 其他资源记录
+cathie_wood_agent来源[ark-invest](https://www.ark-invest.com/)，以后可以研究一下。
+
 ## 许可证
 
 本项目采用 MIT 许可证 - 有关详细信息，请参阅 LICENSE 文件。

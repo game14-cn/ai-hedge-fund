@@ -26,6 +26,13 @@ def cathie_wood_agent(state: AgentState):
     3. Invests mostly in AI, robotics, genomic sequencing, fintech, and blockchain.
     4. Willing to endure short-term volatility for long-term gains.
     """
+    '''
+    使用凯西·伍德的投资原则和LLM推理分析股票。
+    1. 优先考虑具有突破性技术或商业模式的公司
+    2. 关注具有快速采用曲线和巨大总可寻址市场（TAM）的行业。
+    3. 主要投资于人工智能、机器人、基因组测序、金融科技和区块链。
+    4. 愿意承受短期波动以获取长期收益。
+    '''
     data = state["data"]
     end_date = data["end_date"]
     tickers = data["tickers"]
@@ -39,6 +46,7 @@ def cathie_wood_agent(state: AgentState):
 
         progress.update_status("cathie_wood_agent", ticker, "Gathering financial line items")
         # Request multiple periods of data (annual or TTM) for a more robust view.
+        # 请求多个时期的数据（年度或TTM）以获得更稳健的视图
         financial_line_items = search_line_items(
             ticker,
             [
@@ -74,6 +82,7 @@ def cathie_wood_agent(state: AgentState):
         valuation_analysis = analyze_cathie_wood_valuation(financial_line_items, market_cap)
 
         # Combine partial scores or signals
+        # 结合部分分数或信号
         total_score = disruptive_analysis["score"] + innovation_analysis["score"] + valuation_analysis["score"]
         max_possible_score = 15  # Adjust weighting as desired
 
@@ -135,6 +144,15 @@ def analyze_disruptive_potential(metrics: list, financial_line_items: list) -> d
     4. Operating Leverage - demonstrates business model efficiency
     5. Market Share Dynamics - indicates competitive position
     """
+    '''
+    分析公司是否具有颠覆性产品、技术或商业模式。
+    评估颠覆性潜力的多个维度：
+    1. 收入增长加速度 - 表明市场采用程度
+    2. 研发强度 - 显示创新投资
+    3. 毛利率趋势 - 表明定价能力和可扩展性
+    4. 运营杠杆 - 展示商业模式效率
+    5. 市场份额动态 - 表明竞争地位
+    '''
     score = 0
     details = []
 
@@ -145,8 +163,9 @@ def analyze_disruptive_potential(metrics: list, financial_line_items: list) -> d
         }
 
     # 1. Revenue Growth Analysis - Check for accelerating growth
+    # 1. 收入增长分析 - 检查增长是否在加速
     revenues = [item.revenue for item in financial_line_items if item.revenue]
-    if len(revenues) >= 3:  # Need at least 3 periods to check acceleration
+    if len(revenues) >= 3:  # Need at least 3 periods to check acceleration # 至少需要3个时期才能检查加速
         growth_rates = []
         for i in range(len(revenues)-1):
             if revenues[i] and revenues[i+1]:
@@ -154,11 +173,13 @@ def analyze_disruptive_potential(metrics: list, financial_line_items: list) -> d
                 growth_rates.append(growth_rate)
 
         # Check if growth is accelerating
+        # 检查是否正在加速增长
         if len(growth_rates) >= 2 and growth_rates[-1] > growth_rates[0]:
             score += 2
             details.append(f"Revenue growth is accelerating: {(growth_rates[-1]*100):.1f}% vs {(growth_rates[0]*100):.1f}%")
 
         # Check absolute growth rate
+        # 检查绝对增长率
         latest_growth = growth_rates[-1] if growth_rates else 0
         if latest_growth > 1.0:
             score += 3
@@ -173,6 +194,7 @@ def analyze_disruptive_potential(metrics: list, financial_line_items: list) -> d
         details.append("Insufficient revenue data for growth analysis")
 
     # 2. Gross Margin Analysis - Check for expanding margins
+    # 2. 毛利率分析 - 检查是否在扩大
     gross_margins = [item.gross_margin for item in financial_line_items if hasattr(item, 'gross_margin') and item.gross_margin is not None]
     if len(gross_margins) >= 2:
         margin_trend = gross_margins[-1] - gross_margins[0]
@@ -184,13 +206,15 @@ def analyze_disruptive_potential(metrics: list, financial_line_items: list) -> d
             details.append(f"Slightly improving gross margins: +{(margin_trend*100):.1f}%")
 
         # Check absolute margin level
-        if gross_margins[-1] > 0.50:  # High margin business
+        # 检查绝对利润率
+        if gross_margins[-1] > 0.50:  # High margin business    # 高利润率的企业
             score += 2
             details.append(f"High gross margin: {(gross_margins[-1]*100):.1f}%")
     else:
         details.append("Insufficient gross margin data")
 
     # 3. Operating Leverage Analysis
+    # 3. 运营杠杆分析
     revenues = [item.revenue for item in financial_line_items if item.revenue]
     operating_expenses = [
         item.operating_expense
@@ -209,6 +233,7 @@ def analyze_disruptive_potential(metrics: list, financial_line_items: list) -> d
         details.append("Insufficient data for operating leverage analysis")
 
     # 4. R&D Investment Analysis
+    # 4. R&D投资分析
     rd_expenses = [item.research_and_development for item in financial_line_items if hasattr(item, 'research_and_development') and item.research_and_development is not None]
     if rd_expenses and revenues:
         rd_intensity = rd_expenses[-1] / revenues[-1]
@@ -225,7 +250,8 @@ def analyze_disruptive_potential(metrics: list, financial_line_items: list) -> d
         details.append("No R&D data available")
 
     # Normalize score to be out of 5
-    max_possible_score = 12  # Sum of all possible points
+    # 将分数标准化为5分
+    max_possible_score = 12  # Sum of all possible points    # 所有可能点的总和
     normalized_score = (score / max_possible_score) * 5
 
     return {
@@ -246,6 +272,15 @@ def analyze_innovation_growth(metrics: list, financial_line_items: list) -> dict
     4. Capital Allocation - reveals innovation-focused management
     5. Growth Reinvestment - demonstrates commitment to future growth
     """
+    '''
+    评估公司对创新的承诺和指数级增长的潜力。
+    分析多个维度：
+    1. 研发投资趋势 - 衡量对创新的承诺
+    2. 自由现金流生成 - 表明资助创新的能力
+    3. 运营效率 - 显示创新的可扩展性
+    4. 资本分配 - 揭示以创新为重点的管理
+    5. 增长再投资 - 展示对未来增长的承诺
+    '''
     score = 0
     details = []
 
@@ -256,6 +291,7 @@ def analyze_innovation_growth(metrics: list, financial_line_items: list) -> dict
         }
 
     # 1. R&D Investment Trends
+    # 1. R&D投资趋势
     rd_expenses = [
         item.research_and_development
         for item in financial_line_items
@@ -265,8 +301,11 @@ def analyze_innovation_growth(metrics: list, financial_line_items: list) -> dict
 
     if rd_expenses and revenues and len(rd_expenses) >= 2:
         # Check R&D growth rate
+        # 检查R&D增长率
         rd_growth = (rd_expenses[-1] - rd_expenses[0]) / abs(rd_expenses[0]) if rd_expenses[0] != 0 else 0
-        if rd_growth > 0.5:  # 50% growth in R&D
+        if rd_growth > 0.5:  # 50% growth in R&D    # 50%的R&D增长率
+            score += 3
+            details.append(f"Exceptional R&D investment growth: +{(rd_growth*100):.1f}%")
             score += 3
             details.append(f"Strong R&D investment growth: +{(rd_growth*100):.1f}%")
         elif rd_growth > 0.2:
@@ -274,6 +313,7 @@ def analyze_innovation_growth(metrics: list, financial_line_items: list) -> dict
             details.append(f"Moderate R&D investment growth: +{(rd_growth*100):.1f}%")
 
         # Check R&D intensity trend
+        # 检查R&D强度趋势
         rd_intensity_start = rd_expenses[0] / revenues[0]
         rd_intensity_end = rd_expenses[-1] / revenues[-1]
         if rd_intensity_end > rd_intensity_start:
@@ -283,9 +323,11 @@ def analyze_innovation_growth(metrics: list, financial_line_items: list) -> dict
         details.append("Insufficient R&D data for trend analysis")
 
     # 2. Free Cash Flow Analysis
+    # 2. 自由现金流分析
     fcf_vals = [item.free_cash_flow for item in financial_line_items if item.free_cash_flow]
     if fcf_vals and len(fcf_vals) >= 2:
         # Check FCF growth and consistency
+        # 检查FCF增长和一致性
         fcf_growth = (fcf_vals[-1] - fcf_vals[0]) / abs(fcf_vals[0])
         positive_fcf_count = sum(1 for f in fcf_vals if f > 0)
 
@@ -302,9 +344,11 @@ def analyze_innovation_growth(metrics: list, financial_line_items: list) -> dict
         details.append("Insufficient FCF data for analysis")
 
     # 3. Operating Efficiency Analysis
+    # 3. 运营效率分析
     op_margin_vals = [item.operating_margin for item in financial_line_items if item.operating_margin]
     if op_margin_vals and len(op_margin_vals) >= 2:
         # Check margin improvement
+        # 检查利润率的提高
         margin_trend = op_margin_vals[-1] - op_margin_vals[0]
 
         if op_margin_vals[-1] > 0.15 and margin_trend > 0:
@@ -320,6 +364,7 @@ def analyze_innovation_growth(metrics: list, financial_line_items: list) -> dict
         details.append("Insufficient operating margin data")
 
     # 4. Capital Allocation Analysis
+    # 4. 资本分配分析
     capex = [item.capital_expenditure for item in financial_line_items if hasattr(item, 'capital_expenditure') and item.capital_expenditure]
     if capex and revenues and len(capex) >= 2:
         capex_intensity = abs(capex[-1]) / revenues[-1]
@@ -335,11 +380,13 @@ def analyze_innovation_growth(metrics: list, financial_line_items: list) -> dict
         details.append("Insufficient CAPEX data")
 
     # 5. Growth Reinvestment Analysis
+    # 5. 增长再投资分析
     dividends = [item.dividends_and_other_cash_distributions for item in financial_line_items if hasattr(item, 'dividends_and_other_cash_distributions') and item.dividends_and_other_cash_distributions]
     if dividends and fcf_vals:
         # Check if company prioritizes reinvestment over dividends
+        # 检查公司是否优先考虑再投资而不是分红
         latest_payout_ratio = dividends[-1] / fcf_vals[-1] if fcf_vals[-1] != 0 else 1
-        if latest_payout_ratio < 0.2:  # Low dividend payout ratio suggests reinvestment focus
+        if latest_payout_ratio < 0.2:  # Low dividend payout ratio suggests reinvestment focus # 低分红支付比率表明再投资的重点
             score += 2
             details.append("Strong focus on reinvestment over dividends")
         elif latest_payout_ratio < 0.4:
@@ -349,7 +396,8 @@ def analyze_innovation_growth(metrics: list, financial_line_items: list) -> dict
         details.append("Insufficient dividend data")
 
     # Normalize score to be out of 5
-    max_possible_score = 15  # Sum of all possible points
+    # 将分数标准化为5分
+    max_possible_score = 15  # Sum of all possible points    # 所有可能点的总和
     normalized_score = (score / max_possible_score) * 5
 
     return {
@@ -366,6 +414,11 @@ def analyze_cathie_wood_valuation(financial_line_items: list, market_cap: float)
     a simplified approach looking for a large total addressable market (TAM) and the
     company's ability to capture a sizable portion.
     """
+    '''
+    凯西·伍德经常关注长期指数级增长潜力。我们可以采用
+    一种简化的方法来寻找巨大的总可寻址市场（TAM）和
+    公司获取可观市场份额的能力。
+    '''
     if not financial_line_items or market_cap is None:
         return {
             "score": 0,
@@ -383,8 +436,15 @@ def analyze_cathie_wood_valuation(financial_line_items: list, market_cap: float)
         }
 
     # Instead of a standard DCF, let's assume a higher growth rate for an innovative company.
+    # 与其使用标准的DCF，我们假设一个创新公司的更高增长率。
     # Example values:
-    growth_rate = 0.20  # 20% annual growth
+    growth_rate = 0.20  # 20% annual growth # 20%年增长率
+    discount_rate = 0.15  # 15% discount rate # 15%折扣率
+    terminal_multiple = 25  # Terminal value multiple # 终值倍数
+    projection_years = 5  # Years to project # 要预测的年数
+    # Present Value of Future Cash Flows
+    # 未来现金流量的现值
+    present_value = 0
     discount_rate = 0.15
     terminal_multiple = 25
     projection_years = 5
@@ -396,6 +456,7 @@ def analyze_cathie_wood_valuation(financial_line_items: list, market_cap: float)
         present_value += pv
 
     # Terminal Value
+    # 终值
     terminal_value = (fcf * (1 + growth_rate) ** projection_years * terminal_multiple) \
                      / ((1 + discount_rate) ** projection_years)
     intrinsic_value = present_value + terminal_value
@@ -420,8 +481,34 @@ def analyze_cathie_wood_valuation(financial_line_items: list, market_cap: float)
         "intrinsic_value": intrinsic_value,
         "margin_of_safety": margin_of_safety
     }
+'''
+您是一个凯西·伍德 AI 代理，使用她的原则做出投资决策：
 
+1. 寻找利用颠覆性创新的公司。
+2. 强调指数级增长潜力和巨大的总可寻址市场（TAM）。
+3. 专注于技术、医疗保健或其他面向未来的行业。
+4. 考虑多年时间跨度的潜在突破。
+5. 愿意承受较高波动性以追求高回报。
+6. 评估管理层的愿景和投资研发的能力。
 
+规则：
+- 识别颠覆性或突破性技术。
+- 评估多年收入增长的强大潜力。
+- 检查公司是否能在大市场中有效扩张。
+- 使用以增长为导向的估值方法。
+- 提供数据驱动的建议（看涨、看跌或中性）。
+
+在提供理由时，请通过以下方式进行全面而具体的分析：
+1. 识别公司正在利用的具体颠覆性技术/创新
+2. 突出显示表明指数级潜力的增长指标（收入加速、扩大的 TAM）
+3. 讨论 5 年以上时间跨度的长期愿景和变革潜力
+4. 解释公司如何可能颠覆传统行业或创造新市场
+5. 关注可能推动未来增长的研发投资和创新管线
+6. 使用凯西·伍德乐观、面向未来和具有坚定信念的语气
+
+看涨示例："该公司的 AI 驱动平台正在改变 5000 亿美元的医疗保健分析市场，平台采用率同比从 40% 加速到 65%。他们占收入 22% 的研发投资正在创造技术护城河，使他们能够在这个不断扩大的市场中占据重要份额。目前的估值还未反映我们预期的指数级增长轨迹，因为..."
+看跌示例："虽然在基因组领域运营，但该公司缺乏真正的颠覆性技术，仅仅是在逐步改进现有技术。研发支出仅占收入的 8%，表明对突破性创新的投资不足。收入增长从同比 45% 放缓至 20%，缺乏我们在变革性公司中寻找的指数级采用曲线的证据..."
+'''
 def generate_cathie_wood_output(
     ticker: str,
     analysis_data: dict[str, any],
@@ -431,6 +518,9 @@ def generate_cathie_wood_output(
     """
     Generates investment decisions in the style of Cathie Wood.
     """
+    '''
+    以凯西·伍德的风格生成投资决策。
+    '''
     template = ChatPromptTemplate.from_messages([
         (
             "system",

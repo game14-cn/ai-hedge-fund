@@ -29,13 +29,16 @@ _cache = get_cache()
 def get_prices(ticker: str, start_date: str, end_date: str) -> list[Price]:
     """Fetch price data from cache or API."""
     # Check cache first
+    # 检查缓存
     if cached_data := _cache.get_prices(ticker):
         # Filter cached data by date range and convert to Price objects
+        # 过滤缓存数据并转换为Price对象
         filtered_data = [Price(**price) for price in cached_data if start_date <= price["time"] <= end_date]
         if filtered_data:
             return filtered_data
 
     # If not in cache or no data in range, fetch from API
+    # 如果不在缓存或不在范围内，从API获取
     headers = {}
     if api_key := os.environ.get("FINANCIAL_DATASETS_API_KEY"):
         headers["X-API-KEY"] = api_key
@@ -46,6 +49,7 @@ def get_prices(ticker: str, start_date: str, end_date: str) -> list[Price]:
         raise Exception(f"Error fetching data: {ticker} - {response.status_code} - {response.text}")
 
     # Parse response with Pydantic model
+    # 使用Pydantic模型解析响应
     price_response = PriceResponse(**response.json())
     prices = price_response.prices
 
@@ -53,6 +57,7 @@ def get_prices(ticker: str, start_date: str, end_date: str) -> list[Price]:
         return []
 
     # Cache the results as dicts
+    # 将结果缓存为字典
     _cache.set_prices(ticker, [p.model_dump() for p in prices])
     return prices
 
@@ -65,14 +70,17 @@ def get_financial_metrics(
 ) -> list[FinancialMetrics]:
     """Fetch financial metrics from cache or API."""
     # Check cache first
+    # 检查缓存 
     if cached_data := _cache.get_financial_metrics(ticker):
         # Filter cached data by date and limit
+        # 过滤缓存数据并限制
         filtered_data = [FinancialMetrics(**metric) for metric in cached_data if metric["report_period"] <= end_date]
         filtered_data.sort(key=lambda x: x.report_period, reverse=True)
         if filtered_data:
             return filtered_data[:limit]
 
     # If not in cache or insufficient data, fetch from API
+    # 如果不在缓存或不足数据，从API获取
     headers = {}
     if api_key := os.environ.get("FINANCIAL_DATASETS_API_KEY"):
         headers["X-API-KEY"] = api_key
@@ -83,14 +91,17 @@ def get_financial_metrics(
         raise Exception(f"Error fetching data: {ticker} - {response.status_code} - {response.text}")
 
     # Parse response with Pydantic model
+    # 使用Pydantic模型解析响应
     metrics_response = FinancialMetricsResponse(**response.json())
     # Return the FinancialMetrics objects directly instead of converting to dict
+    # 返回FinancialMetrics对象而不是转换为字典
     financial_metrics = metrics_response.financial_metrics
 
     if not financial_metrics:
         return []
 
     # Cache the results as dicts
+    # 将结果缓存为字典
     _cache.set_financial_metrics(ticker, [m.model_dump() for m in financial_metrics])
     return financial_metrics
 
@@ -104,6 +115,7 @@ def search_line_items(
 ) -> list[LineItem]:
     """Fetch line items from API."""
     # If not in cache or insufficient data, fetch from API
+    # 如果不在缓存或不足数据，从API获取
     headers = {}
     if api_key := os.environ.get("FINANCIAL_DATASETS_API_KEY"):
         headers["X-API-KEY"] = api_key
@@ -127,6 +139,7 @@ def search_line_items(
         return []
 
     # Cache the results
+    # 将结果缓存
     return search_results[:limit]
 
 # 获取内部交易数据
@@ -138,8 +151,10 @@ def get_insider_trades(
 ) -> list[InsiderTrade]:
     """Fetch insider trades from cache or API."""
     # Check cache first
+    # 检查缓存
     if cached_data := _cache.get_insider_trades(ticker):
         # Filter cached data by date range
+        # 过滤缓存数据并限制
         filtered_data = [InsiderTrade(**trade) for trade in cached_data 
                         if (start_date is None or (trade.get("transaction_date") or trade["filing_date"]) >= start_date)
                         and (trade.get("transaction_date") or trade["filing_date"]) <= end_date]
@@ -148,6 +163,7 @@ def get_insider_trades(
             return filtered_data
 
     # If not in cache or insufficient data, fetch from API
+    # 如果不在缓存或不足数据，从API获取
     headers = {}
     if api_key := os.environ.get("FINANCIAL_DATASETS_API_KEY"):
         headers["X-API-KEY"] = api_key
@@ -175,13 +191,16 @@ def get_insider_trades(
         all_trades.extend(insider_trades)
         
         # Only continue pagination if we have a start_date and got a full page
+        # 只在有start_date并且得到完整页面时继续分页
         if not start_date or len(insider_trades) < limit:
             break
             
         # Update end_date to the oldest filing date from current batch for next iteration
+        # 更新end_date为当前批次中最旧的filing_date以进行下一次迭代
         current_end_date = min(trade.filing_date for trade in insider_trades).split('T')[0]
         
         # If we've reached or passed the start_date, we can stop
+        # 如果我们已经达到或超过了start_date，我们可以停止
         if current_end_date <= start_date:
             break
 
@@ -189,6 +208,7 @@ def get_insider_trades(
         return []
 
     # Cache the results
+    # 将结果缓存
     _cache.set_insider_trades(ticker, [trade.model_dump() for trade in all_trades])
     return all_trades
 
@@ -203,6 +223,7 @@ def get_company_news(
     # Check cache first
     if cached_data := _cache.get_company_news(ticker):
         # Filter cached data by date range
+        # 过滤缓存数据并限制
         filtered_data = [CompanyNews(**news) for news in cached_data 
                         if (start_date is None or news["date"] >= start_date)
                         and news["date"] <= end_date]
@@ -211,6 +232,7 @@ def get_company_news(
             return filtered_data
 
     # If not in cache or insufficient data, fetch from API
+    # 如果不在缓存或不足数据，从API获取
     headers = {}
     if api_key := os.environ.get("FINANCIAL_DATASETS_API_KEY"):
         headers["X-API-KEY"] = api_key
@@ -238,13 +260,16 @@ def get_company_news(
         all_news.extend(company_news)
         
         # Only continue pagination if we have a start_date and got a full page
+        # 只在有start_date并且得到完整页面时继续分页
         if not start_date or len(company_news) < limit:
             break
             
         # Update end_date to the oldest date from current batch for next iteration
+        # 更新end_date为当前批次中最旧的date以进行下一次迭代
         current_end_date = min(news.date for news in company_news).split('T')[0]
         
         # If we've reached or passed the start_date, we can stop
+        # 如果我们已经达到或超过了start_date，我们可以停止
         if current_end_date <= start_date:
             break
 
@@ -252,6 +277,7 @@ def get_company_news(
         return []
 
     # Cache the results
+    # 将结果缓存
     _cache.set_company_news(ticker, [news.model_dump() for news in all_news])
     return all_news
 
@@ -281,6 +307,7 @@ def prices_to_df(prices: list[Price]) -> pd.DataFrame:
     return df
 
 # Update the get_price_data function to use the new functions
+# 更新get_price_data函数以使用新函数
 def get_price_data(ticker: str, start_date: str, end_date: str) -> pd.DataFrame:
     prices = get_prices(ticker, start_date, end_date)
     return prices_to_df(prices)
